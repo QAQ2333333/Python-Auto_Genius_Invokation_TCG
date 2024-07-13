@@ -43,7 +43,7 @@ pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tessera
 确保脚本所在目录下包含以下 16 张图片：
 
 ```
-
+就是根目录下的那图片
 ```
 
 ## 使用方法
