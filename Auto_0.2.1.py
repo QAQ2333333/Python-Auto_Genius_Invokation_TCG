@@ -471,7 +471,8 @@ def read(line):
 def main():
     global turn_num
     turn_num = 2
-
+    print('项目地址：https://github.com/QAQ2333333/Python-Auto_Genius_Invokation_TCG')
+    print('INFO：即将开始自动七圣召唤————————————')
     init_shot()
     sure()
 
