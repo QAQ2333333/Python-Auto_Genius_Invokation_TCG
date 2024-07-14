@@ -58,7 +58,7 @@ pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tessera
 
 ## 待完善功能
 
-- 当前版本尚未适配冻结、超载等特殊情况，后续版本会尽快更新以支持更多功能。
+- 当前版本尚未适配冻结、死亡（超载或者强制换人已适配）等特殊情况，后续版本会尽快更新以支持更多功能。
 
 ## 贡献
 
