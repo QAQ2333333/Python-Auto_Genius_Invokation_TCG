@@ -30,7 +30,7 @@ name = ['水', '火', '风', '雷', '草', '冰', '岩', '万能']
 need_dices = [0, 4, 7]  # 按照上面的顺序选择需要保留的元素
 turn_num = 2
 people_num = 0
-
+# need_position = 1
 
 # 初始定位窗口位置
 def init_shot():
@@ -90,7 +90,7 @@ def judge_dice():
         if min_index in [0, 4, 7]:
             need[j] = 0
 
-        print()
+        # print()
 
     print(need)
     return need
@@ -156,7 +156,7 @@ def judge_stage_pro():  # 重投
 def judge_stage_pro_max():  # 角色
     gray = cv2.cvtColor(image[711:736, 1473:1566], cv2.COLOR_BGR2GRAY)
 
-    ret, thresh = cv2.threshold(gray, 120, 225, cv2.THRESH_BINARY)
+    ret, thresh = cv2.threshold(gray, 140, 225, cv2.THRESH_BINARY)
 
     # 应用一些形态学操作来减少噪声
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 1))
@@ -230,6 +230,28 @@ def judge_enough(which, element, n):
             return True, r
 
 
+def judge_position(c):
+    screenshot()
+    positions = []
+    people_position = [(558, 687), (735, 864), (907, 1040)]
+    for x1_position, x2_position in people_position:
+        gray = cv2.cvtColor(image[484:504, x1_position:x2_position], cv2.COLOR_BGR2GRAY)
+
+        ret, thresh = cv2.threshold(gray, 224, 225, cv2.THRESH_BINARY_INV)
+        white = np.sum(thresh == 0)
+
+        positions.append(white)
+
+    best = max(positions)
+    best_position = positions.index(best)
+    print(f'INFO:当前角色位置：{best_position}')
+    if best_position == c-1 :
+        return True, best_position
+    else:
+        print(f'INFO:不满足要求,即将切换角色位置：{c-1}')
+        return False, best_position
+
+
 # 调和元素
 def harmony():
     x1 = 840 + x_window
@@ -292,6 +314,7 @@ def change(who):
     global turn_num
     if who == 1:
         print('INFO:执行换人：1号位')
+        print(f'当前执行策略第{turn_num}步')
         pyautogui.click(619 + x_window, 626 + y_window, clicks=1, button='left')
         time.sleep(1.4)
         pyautogui.moveTo(1519 + x_window, 798 + y_window, duration=0.1)
@@ -306,6 +329,7 @@ def change(who):
         turn_num = turn_num + 1
     elif who == 2:
         print('INFO:执行换人：2号位')
+        print(f'当前执行策略第{turn_num}步')
         pyautogui.click(791 + x_window, 626 + y_window, clicks=1, button='left')
         time.sleep(1.4)
         pyautogui.moveTo(1519 + x_window, 798 + y_window, duration=0.1)
@@ -320,6 +344,7 @@ def change(who):
         turn_num = turn_num + 1
     elif who == 3:
         print('INFO:执行换人：3号位')
+        print(f'当前执行策略第{turn_num}步')
         pyautogui.click(972 + x_window, 626 + y_window, clicks=1, button='left')
         time.sleep(1.4)
         pyautogui.moveTo(1519 + x_window, 798 + y_window, duration=0.1)
@@ -365,7 +390,6 @@ def get_point():
     else:
         print('WARMING:未识别到行动点数')
         return 0
-        end()
 
 
 # 行动(攻击）
@@ -373,15 +397,12 @@ def attack(skill, ele):
     global turn_num
     get_p = get_point()
     if get_p >= 3:
-        if skill >= 2:
-            need_p = 3
-        else:
-            need_p = 1
         b, times = judge_enough(skill, ele, get_p)
         if b:
             for _ in range(0, times):
                 harmony()
         if not b:
+            print(f'当前执行策略第{turn_num}步')
             turn_num = turn_num + 1
             click_skill(skill)
 
@@ -404,7 +425,8 @@ def judge():
             print('INFO:确认完成')
             print('INFO:行动阶段——————————')
             return 1
-
+        else:
+            print('WARMING:确认失败，当前阶段不为行动阶段')
     elif '等' in response:
         print('INFO:等待阶段——————————')
         time.sleep(1.5)
@@ -441,6 +463,7 @@ def judge():
 
 # 读取策略
 def read(line):
+    global need_position
     with open('plan.txt', 'r') as f:
         n_element = []
         for i, l in enumerate(f, start=1):
@@ -448,6 +471,8 @@ def read(line):
                 l = l.strip()
                 try:
                     request = l[0:6]
+                    if request == 'change':
+                        need_position = int(l[6:7])
                     request_num = int(l[6:7])
                     n_element.append(int(l[7:8]))
                     try:
@@ -469,13 +494,14 @@ def read(line):
 
 # 主函数
 def main():
-    global turn_num
+    global turn_num, need_position
     turn_num = 2
     print('项目地址：https://github.com/QAQ2333333/Python-Auto_Genius_Invokation_TCG')
     print('INFO：即将开始自动七圣召唤————————————')
+    time.sleep(2)
+
     init_shot()
     sure()
-
     while True:
         screenshot()
         state = judge()  # 0为重投阶段，1为行动阶段,2为选择角色
@@ -490,11 +516,20 @@ def main():
             print('INFO:开始行动——————————')
             request, request_num, need_element = read(turn_num)
             if request == 'change':
+                need_position = request_num
+                k, l = judge_position(request_num)
+                if k == request_num:
+                    turn_num = turn_num + 1
+                    print('INFO:跳过换人阶段')
+                else:
+                    change(request_num)
 
-                change(request_num)
             elif request == 'attack':
-                attack(request_num, need_element)
-
+                g, h = judge_position(need_position)
+                if g:
+                    attack(request_num, need_element)
+                else:
+                    change(need_position)
             elif request == '所有策略已经执行完毕':
                 turn_num = turn_num + 1
                 attack(1, [0])
